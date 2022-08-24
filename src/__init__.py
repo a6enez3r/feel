@@ -118,11 +118,26 @@ class Feel:
             default=False,
         )
         parser.add_argument(
-            "-oc",
-            "--original_counts",
+            "-c",
+            "--counts",
             help="display original value counts for filtered columns",
             action="store_true",
             default=False,
+        )
+        parser.add_argument(
+            "-n",
+            "--normalize",
+            help="whether to normalize value counts",
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
+            "-s",
+            "--sample",
+            help="sample n rows from filtered CSV",
+            type=int,
+            default=None,
+            nargs="?"
         )
         parser.add_argument(
             "-f", "--filter", action="append", help=f"{FILTER_TYPES}", required=True

@@ -78,11 +78,14 @@ endif
 ifeq ($(root_path),)
 root_path := /Users/abenezer.mamo/Klaviyo/Repos/eng-handbook
 endif
+ifeq ($(deptype),)
+deptype := development
+endif
 
 ## install deps
 deps:
 	@python3 -m pip install -U pip setuptools wheel
-	@python3 -m pip install -r requirements.txt
+	@python3 -m pip install -r requirements/${deptype}.txt
 
 ## format cli
 format:

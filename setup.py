@@ -10,7 +10,7 @@ from os import path
 this_dir = path.abspath(path.dirname(__file__))
 with open(path.join(this_dir, "README.md"), encoding="utf-8") as readme_file:
     long_description = readme_file.read()
-with open(path.join(this_dir, "requirements.txt"), encoding="utf-8") as requirements_file:
+with open(path.join(this_dir, "requirements/production.txt"), encoding="utf-8") as requirements_file:
     requirements = requirements_file.read().splitlines()
 
 
