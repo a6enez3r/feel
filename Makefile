@@ -104,3 +104,7 @@ build:
 ## install cli
 install:
 	@python3 -m setup install
+
+## run tests
+test:
+	@python3 -m pytest tests/ -vvs

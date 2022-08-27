@@ -26,6 +26,7 @@ filters:
 """
 import argparse
 import functools
+import sys
 from typing import List, Any, Optional
 
 import pandas as pd
@@ -45,12 +46,11 @@ FILTER TYPES\t\t\t\tDESCRIPTION\t\t\t\tSUPPORTED TYPES
 FILTER_OPERATORS = ["~", ">", "<", "|"]
 
 
-class Feel:
-    """
-    primitive filter operations on a CSV file
-    """
+class Operations:
+    """utility class for type operations"""
 
-    def is_float(element: Any) -> bool:
+    @staticmethod
+    def can_float(element: Any) -> bool:
         """
         check whether a given object is a float
         """
@@ -62,18 +62,19 @@ class Feel:
         except TypeError:
             return False
 
-    def is_int(element: Any) -> bool:
+    @staticmethod
+    def can_int(element: Any) -> bool:
         """
         check whether a given object is an int
         """
         try:
-            int(element)
-            return True
+            return int(element) == element
         except ValueError:
             return False
         except TypeError:
             return False
 
+    @staticmethod
     def conjunction(*conditions: List[Any]):
         """
         chain pandas filters stored in a list together
@@ -82,7 +83,11 @@ class Feel:
         """
         return functools.reduce(np.logical_and, conditions)
 
-    def get_formatter(
+
+class Terminal:
+    """utility class for common command line operations"""
+
+    def _prettier(
         formatter: argparse.RawTextHelpFormatter, width: int = 120, height: int = 36
     ):
         """
@@ -101,12 +106,13 @@ class Feel:
             argparse.ArgumentTypeError("argparse help formatter failed, falling back.")
             return formatter
 
-    def get_parser() -> argparse.ArgumentParser:
+    @staticmethod
+    def parser() -> argparse.ArgumentParser:
         """
         Initialize command line parser with a wide text formatter
         """
         parser = argparse.ArgumentParser(
-            formatter_class=Feel.get_formatter(argparse.RawTextHelpFormatter)
+            formatter_class=Terminal._prettier(argparse.RawTextHelpFormatter)
         )
         parser.add_argument("input", help="path to input CSV file")
         parser.add_argument("output", help="path to output CSV file")
@@ -137,14 +143,15 @@ class Feel:
             help="sample n rows from filtered CSV",
             type=int,
             default=None,
-            nargs="?"
+            nargs="?",
         )
         parser.add_argument(
             "-f", "--filter", action="append", help=f"{FILTER_TYPES}", required=True
         )
         return parser
 
-    def get_file(path: str) -> pd.DataFrame:
+    @staticmethod
+    def reader(path: str) -> pd.DataFrame:
         """
         read CSV file into dataframe
 
@@ -152,7 +159,13 @@ class Feel:
         """
         return pd.read_csv(path)
 
-    def convert_filter(
+
+class Feel(Terminal):
+    """
+    primitive filter operations on a CSV file
+    """
+
+    def _convert_filter(
         dataframe: pd.DataFrame, column: str, operator: str, filter_val: str
     ):
         """
@@ -176,7 +189,7 @@ class Feel:
         return dataframe[column] == filter_val
 
     @staticmethod
-    def column_filter(
+    def _column_filter(
         dataframe: pd.DataFrame,
         filter_val: str,
         column: str,
@@ -190,36 +203,32 @@ class Feel:
         :param column (str): column we want to filter by
         :param operator (str): filtering operator (~, <, >, |)
         """
-        float_val = Feel.is_float(filter_val)
-        int_val = Feel.is_int(filter_val)
+        float_val = Operations.can_float(filter_val)
+        int_val = Operations.can_int(filter_val)
         list_val = "|" in filter_val
         if float_val or int_val:
-            if Feel.is_float(filter_val):
-                return Feel.convert_filter(
+            if Operations.can_float(filter_val):
+                return Feel._convert_filter(
                     dataframe, column, operator, float(filter_val)
                 )
-            return Feel.convert_filter(
-                dataframe, column, operator, int(filter_val)
-            )
+            return Feel._convert_filter(dataframe, column, operator, int(filter_val))
         if list_val:
             multi_val = filter_val.split("|")
-            float_list, int_list = Feel.is_float(multi_val[0]), Feel.is_int(
-                filter_val[0]
-            )
+            float_list, int_list = Operations.can_float(
+                multi_val[0]
+            ), Operations.can_int(filter_val[0])
             if float_list or int_list:
                 if float_list:
                     converted_multi_val = [float(val) for val in multi_val]
                 else:
                     converted_multi_val = [int(val) for val in multi_val]
-                return Feel.column_filter(
+                return Feel._column_filter(
                     dataframe, converted_multi_val, column, operator
                 )
-            return Feel.column_filter(
-                dataframe, multi_val, column, operator
-            )
-        return Feel.convert_filter(dataframe, column, operator, filter_val)
+            return Feel._column_filter(dataframe, multi_val, column, operator)
+        return Feel._convert_filter(dataframe, column, operator, filter_val)
 
-    def apply_filters(filters: List[Any], dataframe: pd.DataFrame, columns: str):
+    def filtering(filters: List[Any], dataframe: pd.DataFrame, columns: str):
         """
         verify a filter value is of the right format
 
@@ -263,9 +272,7 @@ class Feel:
                         filter_val.split("~")[1],
                     )
                     concatenated.append(
-                        Feel.column_filter(
-                            dataframe, stripped_val, column, operator
-                        )
+                        Feel._column_filter(dataframe, stripped_val, column, operator)
                     )
                 elif ">" in filter_val:
 
@@ -274,9 +281,7 @@ class Feel:
                         filter_val.split(">")[1],
                     )
                     concatenated.append(
-                        Feel.column_filter(
-                            dataframe, stripped_val, column, operator
-                        )
+                        Feel._column_filter(dataframe, stripped_val, column, operator)
                     )
                 elif "<" in filter_val:
                     operator, stripped_val = (
@@ -284,17 +289,44 @@ class Feel:
                         filter_val.split("<")[1],
                     )
                     concatenated.append(
-                        Feel.column_filter(
-                            dataframe, stripped_val, column, operator
-                        )
+                        Feel._column_filter(dataframe, stripped_val, column, operator)
                     )
                 else:
                     concatenated.append(
-                        Feel.column_filter(dataframe, filter_val, column)
+                        Feel._column_filter(dataframe, filter_val, column)
                     )
             else:
-                concatenated.append(
-                    Feel.column_filter(dataframe, filter_val, column)
-                )
-        return concatenated, in_use
+                concatenated.append(Feel._column_filter(dataframe, filter_val, column))
+        return dataframe[Operations.conjunction(*concatenated)], in_use
 
+    @staticmethod
+    def cli(cli_args: argparse.Namespace):
+        """
+        process command line arguments
+
+        :param cli_args (argparse.Namespace): argparse command line arguments
+        """
+        if cli_args.input == "" or cli_args.output == "":
+            print("valid path to input/output CSV is required")
+            sys.exit()
+        # read CSV into a pandas dataframe + extract column names using pandas
+        original_dataframe: pd.DataFrame = Feel.reader(cli_args.input)
+        dataframe_columns: List[Any] = list(original_dataframe.columns)
+        # apply pandas filters on dataframe
+        filtered_dataframe, col_in_use = Feel.filtering(
+            cli_args.filter, original_dataframe, dataframe_columns
+        )
+
+        if cli_args.sample is not None:
+            print(f"\nsampled: {cli_args.sample} rows")
+            filtered_dataframe = filtered_dataframe.sample(n=cli_args.sample)
+        if cli_args.verbose:
+            for col in col_in_use:
+                if cli_args.counts:
+                    print(
+                        f"\nOriginal Counts: {col}\n\n{original_dataframe[col].value_counts(normalize=cli_args.normalize).to_markdown()}"
+                    )
+                print(
+                    f"\nFiltered Counts: {col}\n\n{filtered_dataframe[col].value_counts(normalize=cli_args.normalize).to_markdown()}"
+                )
+        filtered_dataframe.to_csv(cli_args.output, index=False)
