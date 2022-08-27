@@ -20,7 +20,7 @@ Is a tiny python CLI that allows you to filter CSV rows by column values on the 
 and is invoked with the following syntax
 ```
 
-    feel input.csv --filter "col_name:filter_val" --filter "col_name:~filter_val" \
+    feel input.csv filtered.csv --filter "col_name:filter_val" --filter "col_name:~filter_val" \
         --filter "col_name:>filter_val" --filter "col_name:<filter_val" --filter \
         "col_name:filter_vals|filter_vals" --filter "col_name:~filter_vals|filter_vals" \
 ```
