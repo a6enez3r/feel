@@ -1,4 +1,25 @@
-## feel.Makefile: commands for generating a low-memory CSV filter CLI called feel
+pn := feel
+mn := src
+tn := tests
+
+ifeq ($(version),)
+version := 0.0.1
+endif
+ifeq ($(cm),)
+cm := default commit message
+endif
+ifeq ($(branch),)
+branch := main
+endif
+ifeq ($(topts),)
+topts := -vv
+endif
+ifeq ($(dtype),)
+dtype := development
+endif
+ifeq ($(durations),)
+durations := 10
+endif
 
 .DEFAULT_GOAL := help
 TARGET_MAX_CHAR_NUM=20
@@ -28,20 +49,19 @@ endif
 ## show usage / common commands available
 .PHONY: help
 help:
-	@printf "\n${PURPLE}common${RESET}: collection of commands to simplify running common Docker containers\n\n"
 	@printf "${RED}cmds:\n\n";
 
 	@awk '{ \
 			if ($$0 ~ /^.PHONY: [a-zA-Z\-\_0-9]+$$/) { \
 				helpCommand = substr($$0, index($$0, ":") + 2); \
 				if (helpMessage) { \
-					printf "  ${LIGHTPURPLE}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n\n", helpCommand, helpMessage; \
+					printf "  ${PURPLE}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n\n", helpCommand, helpMessage; \
 					helpMessage = ""; \
 				} \
 			} else if ($$0 ~ /^[a-zA-Z\-\_0-9.]+:/) { \
 				helpCommand = substr($$0, 0, index($$0, ":")); \
 				if (helpMessage) { \
-					printf "  ${BLUE}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n", helpCommand, helpMessage; \
+					printf "  ${YELLOW}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n", helpCommand, helpMessage; \
 					helpMessage = ""; \
 				} \
 			} else if ($$0 ~ /^##/) { \
@@ -52,59 +72,108 @@ help:
 				} \
 			} else { \
 				if (helpMessage) { \
-					print "\n${YELLOW}             "helpMessage"\n" \
+					print "\n${LIGHTPURPLE}             "helpMessage"\n" \
 				} \
 				helpMessage = ""; \
 			} \
 		}' \
 		$(MAKEFILE_LIST)
 
+## -- git --
 
-## -- shell commands --
+## save changes locally [git]
+save-local:
+	@echo "saving..."
+	@git add .
+	@git commit -m "${cm}"
 
-# general config
-ifeq ($(parser_in),)
-parser_in := /Users/abenezer.mamo/Klaviyo/personal/packages/sirch/parser/content
-endif
-ifeq ($(parser_out),)
-parser_out := /Users/abenezer.mamo/Klaviyo/personal/packages/sirch/site/content/post
-endif
-ifeq ($(input_path),)
-input_path := /Users/abenezer.mamo/Klaviyo/Repos/eng-handbook/
-endif
-ifeq ($(output_path),)
-output_path := /Users/abenezer.mamo/Klaviyo/personal/packages/sirch/parser/content
-endif
-ifeq ($(root_path),)
-root_path := /Users/abenezer.mamo/Klaviyo/Repos/eng-handbook
-endif
-ifeq ($(deptype),)
-deptype := development
-endif
+## save changes to remote [git]
+save-remote:
+	@echo "saving to remote..."
+	@git push origin ${branch}
 
-## install deps
+## pull changes from remote
+pull-remote:
+	@echo "pulling from remote..."
+	@git pull origin ${branch}
+
+## create new tag, recreate if it exists
+tag:
+	git tag -d ${version} || : 
+	git push --delete origin ${version} || : 
+	git tag -a ${version} -m "latest" 
+	git push origin --tags
+
+## -- python --
+
+## build package
+pkg-build:
+	@echo "building..." && python3 setup.py build
+
+## install package
+pkg-install:
+	@echo "installing..." && python3 setup.py install
+
+## install package dependencies [dtype = development | production]
 deps:
-	@python3 -m pip install -U pip setuptools wheel
-	@python3 -m pip install -r requirements/${deptype}.txt
+	@python3 -m pip install --upgrade pip setuptools wheel
+	@if [ -f requirements/${dtype}.txt ]; then pip install -r requirements/${dtype}.txt; fi
 
-## format cli
-format:
-	@python3 -m black src
-	@python3 -m black tests
-
-## lint cli
-lint:
-	@python3 -m pylint src
-	@python3 -m pylint tests
-
-## build cli
-build:
-	@python3 -m setup build
-
-## install cli
-install:
-	@python3 -m setup install
-
-## run tests
+## run tests [pytest]
 test:
-	@python3 -m pytest tests/ -vvs
+	@echo "running tests..."
+	@python3 -m pytest --durations=${durations} --cov-report term-missing --cov=${mn} ${tn} ${topts}
+
+## -- code quality --
+
+## run test profiling [pytest-profiling]
+profile:
+	@echo "running tests..."
+	@python3 -m pytest --profile ${tn} ${topts}
+
+## run formatting [black]
+format:
+	@echo "formatting..."
+	@python3 -m black ${mn}
+	@python3 -m black ${tn}
+
+## run linting [pylint]
+lint:
+	@echo "linting..."
+	@python3 -m pylint ${mn}
+	@python3 -m pylint ${tn}
+
+## run linting & formatting
+prettify: format lint
+
+## type inference [pyre]
+type-infer:
+	@echo "inferring types..."
+	@pyre infer
+
+## type checking [pyre]
+type-check:
+	@echo "checking types..."
+	@pyre
+
+## scan for dead code [vulture]
+scan-deadcode:
+	@echo "checking dead code..."
+	@vulture ${mn} || exit 0
+	@vulture ${tn} || exit 0
+
+## scan for security issues [bandit]
+scan-security:
+	@echo "checking for security issues..."
+	@bandit ${mn}
+
+## -- docs --
+
+## build docs [pdoc]
+docs-build:
+	@echo "building docs..."
+	@python3 -m pdoc ${mn} -o docs
+
+## serve docs [pdoc]
+docs-serve:
+	@python3 -m pdoc ${mn}
