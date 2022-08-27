@@ -33,7 +33,7 @@ python3 -m venv venv
 source venv/bin/activate
 make deps
 ```
-- Install CLI
+- Install CLI dependencies & the CLI itself
 ```
-make install
+make pkg-install
 ```
