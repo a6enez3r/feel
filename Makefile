@@ -49,6 +49,7 @@ endif
 ## show usage / common commands available
 .PHONY: help
 help:
+	@printf "\n${PURPLE}common${RESET}: collection of commands for generating a low-memory CSV filter CLI called feel\n\n"
 	@printf "${RED}cmds:\n\n";
 
 	@awk '{ \
