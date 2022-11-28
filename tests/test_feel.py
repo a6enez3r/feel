@@ -6,7 +6,7 @@ import csv
 import pytest
 import pandas as pd
 
-from src import Operations, Terminal, Feel
+from feel import Operations, Terminal, Feel
 
 
 class TestOperations:

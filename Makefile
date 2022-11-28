@@ -1,5 +1,5 @@
 pn := feel
-mn := src
+mn := feel
 tn := tests
 
 ifeq ($(version),)

@@ -1,7 +1,7 @@
 """
     feel: a tiny CLI to filter rows by column values in a CSV file
 """
-from src import Feel
+from feel import Feel
 
 
 def main():

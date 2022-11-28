@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include requirements/production.txt
+graft feel
+recursive-exclude * *.py[co]
+include versioneer.py
+include feel/_version.py

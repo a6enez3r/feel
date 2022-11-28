@@ -32,6 +32,10 @@ from typing import List, Any, Optional
 import pandas as pd
 import numpy as np
 
+from feel import _version
+
+__version__ = _version.get_versions()["version"]
+
 
 FILTER_TYPES = """
 FILTER TYPES\t\t\t\tDESCRIPTION\t\t\t\tSUPPORTED TYPES

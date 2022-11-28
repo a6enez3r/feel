@@ -4,6 +4,8 @@ feel
 
 filter CSV files
 """
+import versioneer
+
 from setuptools import setup, find_packages
 from os import path
 
@@ -16,7 +18,8 @@ with open(path.join(this_dir, "requirements/production.txt"), encoding="utf-8") 
 
 setup(
     name="feel",
-    version="0.0.1",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description="feel-ter CSV files",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,6 +30,6 @@ setup(
     install_requires=requirements,
     zip_safe=False,
     entry_points = {
-        "console_scripts": ["feel=src.__main__:main"]
+        "console_scripts": ["feel=feel.__main__:main"]
     }
 )
