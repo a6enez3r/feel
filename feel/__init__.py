@@ -107,7 +107,6 @@ class Terminal:
             formatter(None, **kwargs)
             return lambda prog: formatter(prog, **kwargs)
         except TypeError:
-            argparse.ArgumentTypeError("argparse help formatter failed, falling back.")
             return formatter
 
     @staticmethod
