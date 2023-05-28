@@ -1,4 +1,4 @@
-# `feel` [![test](https://github.com/a6enez3r/feel/actions/workflows/pipeline.yml/badge.svg)](https://github.com/a6enez3r/feel/actions/workflows/pipeline.yml)
+# `feel` [![pipeline](https://github.com/a6enez3r/feel/actions/workflows/pipeline.yml/badge.svg)](https://github.com/a6enez3r/feel/actions/workflows/pipeline.yml)
 
 Is a tiny python CLI that allows you to filter CSV rows by column values on the command line. It it built on top of `pandas` & has a relatively low memory footprint. Currently supports the following filter operations:
 
