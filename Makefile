@@ -5,20 +5,23 @@ tn := tests
 ifeq ($(version),)
 version := 0.0.1
 endif
-ifeq ($(cm),)
-cm := default commit message
+ifeq ($(commit_message),)
+commit_message := default commit message
 endif
 ifeq ($(branch),)
 branch := main
 endif
-ifeq ($(topts),)
-topts := -vv
+ifeq ($(pytest_opts),)
+pytest_opts := -vv
 endif
-ifeq ($(dtype),)
-dtype := development
+ifeq ($(dep_type),)
+dep_type := development
 endif
 ifeq ($(durations),)
 durations := 10
+endif
+ifeq ($(pkg_type),)
+pkg_type := develop
 endif
 
 .DEFAULT_GOAL := help
@@ -86,7 +89,7 @@ help:
 save-local:
 	@echo "saving..."
 	@git add .
-	@git commit -m "${cm}"
+	@git commit -m "${commit_message}"
 
 ## save changes to remote [git]
 save-remote:
@@ -113,24 +116,24 @@ pkg-build:
 
 ## install package
 pkg-install:
-	@echo "installing..." && python3 setup.py install
+	@echo "installing..." && python3 setup.py ${pkg_type}
 
-## install package dependencies [dtype = development | production]
+## install package dependencies [dep_type = development | production]
 deps:
 	@python3 -m pip install --upgrade pip setuptools wheel
-	@if [ -f requirements/${dtype}.txt ]; then pip install -r requirements/${dtype}.txt; fi
+	@if [ -f requirements/${dep_type}.txt ]; then pip install -r requirements/${dep_type}.txt; fi
 
 ## run tests [pytest]
 test:
 	@echo "running tests..."
-	@python3 -m pytest --durations=${durations} --cov-report term-missing --cov=${mn} ${tn} ${topts}
+	@python3 -m pytest --durations=${durations} --cov-report term-missing --cov=${mn} ${tn} ${pytest_opts}
 
 ## -- code quality --
 
 ## run test profiling [pytest-profiling]
 profile:
 	@echo "running tests..."
-	@python3 -m pytest --profile ${tn} ${topts}
+	@python3 -m pytest --profile ${tn} ${pytest_opts}
 
 ## run formatting [black]
 format:
@@ -178,3 +181,15 @@ docs-build:
 ## serve docs [pdoc]
 docs-serve:
 	@python3 -m pdoc ${mn}
+
+## -- docker --
+
+## build image [docker]
+build-env:
+	@echo "building image..."
+	@docker build . -t ${pn}:${container_tag}
+
+## build & push image [docker]
+push-env:
+	@make build-env
+	@docker push ${pn}:${container_tag}
