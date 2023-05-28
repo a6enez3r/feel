@@ -23,6 +23,9 @@ endif
 ifeq ($(pkg_type),)
 pkg_type := develop
 endif
+ifeq ($(container_tag),)
+container_tag := local
+endif
 
 .DEFAULT_GOAL := help
 TARGET_MAX_CHAR_NUM=20
