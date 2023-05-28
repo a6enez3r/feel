@@ -3,10 +3,10 @@ test_feel: tests for feel, a module to filter rows by column values in a CSV fil
 """
 import csv
 
-import pytest
 import pandas as pd
+import pytest
 
-from feel import Operations, Terminal, Feel
+from feel import Feel, Operations, Terminal
 
 
 class TestOperations:

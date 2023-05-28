@@ -12,7 +12,9 @@ from os import path
 this_dir = path.abspath(path.dirname(__file__))
 with open(path.join(this_dir, "README.md"), encoding="utf-8") as readme_file:
     long_description = readme_file.read()
-with open(path.join(this_dir, "requirements/production.txt"), encoding="utf-8") as requirements_file:
+with open(
+    path.join(this_dir, "requirements/production.txt"), encoding="utf-8"
+) as requirements_file:
     requirements = requirements_file.read().splitlines()
 
 
@@ -29,7 +31,5 @@ setup(
     packages=find_packages(exclude=("tests", "venv")),
     install_requires=requirements,
     zip_safe=False,
-    entry_points = {
-        "console_scripts": ["feel=feel.__main__:main"]
-    }
+    entry_points={"console_scripts": ["feel=feel.__main__:main"]},
 )

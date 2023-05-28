@@ -2,13 +2,15 @@
 """
 feel: a module to filter rows by column values in a CSV file
 
-invoked:
+Usage
+-----
 
-    python3 feel input.csv --filter "col_name:filter_val" --filter "col_name:~filter_val" \
+    python3 feel test.csv --filter "col_name:filter_val" --filter "col_name:~filter_val" \
         --filter "col_name:>filter_val" --filter "col_name:<filter_val" --filter \
         "col_name:filter_vals|filter_vals" --filter "col_name:~filter_vals|filter_vals" \
 
-filters:
+Filters
+-------
 
     TYPES                                      DESCRIPTION                          SUPPORTED TYPES
 
@@ -27,10 +29,10 @@ filters:
 import argparse
 import functools
 import sys
-from typing import List, Any, Optional
+from typing import Any, List, Optional, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from feel import _version
 
@@ -51,12 +53,20 @@ FILTER_OPERATORS = ["~", ">", "<", "|"]
 
 
 class Operations:
-    """utility class for type operations"""
+    """Utility class for type operations."""
 
     @staticmethod
     def can_float(element: Any) -> bool:
         """
-        check whether a given object is a float
+        Check whether a given object is a float.
+
+        Args
+        -----
+            - element (Any): The object to check.
+
+        Returns
+        -------
+            bool: True if the object can be converted to a float, False otherwise.
         """
         try:
             float(element)
@@ -69,7 +79,15 @@ class Operations:
     @staticmethod
     def can_int(element: Any) -> bool:
         """
-        check whether a given object is an int
+        Check whether a given object is an int.
+
+        Args
+        ----
+            - element: The object to check.
+
+        Returns
+        -------
+            bool: True if the object can be converted to an int, False otherwise.
         """
         try:
             return int(element) == element
@@ -81,24 +99,42 @@ class Operations:
     @staticmethod
     def conjunction(*conditions: List[Any]):
         """
-        chain pandas filters stored in a list together
-
+        Chain pandas filters stored in a list together. See link below for more info :-
         https://stackoverflow.com/questions/13611065/efficient-way-to-apply-multiple-filters-to-pandas-dataframe-or-series
+
+        Args
+        -----
+            - conditions: List of conditions to combine.
+
+        Returns
+        -------
+            np.ndarray: Result of applying logical AND to the conditions.
         """
         return functools.reduce(np.logical_and, conditions)
 
 
 class Terminal:
-    """utility class for common command line operations"""
+    """
+    Utility class for common command line operations.
+    """
 
     def _prettier(
         formatter: argparse.RawTextHelpFormatter, width: int = 120, height: int = 36
     ):
         """
         Return a wider HelpFormatter if possible to allow us to show a wider help message
-        when python3 feel --help is run
-
+        when python3 feel --help is run. See the link below for more info :-
         https://stackoverflow.com/questions/3853722/how-to-insert-newlines-on-argparse-help-text
+
+        Args
+        ----
+            - formatter (argparse.RawTextHelpFormatter): The formatter object to be modified.
+            - width (int): The desired width of the formatter. Default is 120.
+            - height (int): The desired height of the formatter. Default is 36.
+
+        Returns
+        -------
+            callable: The modified formatter function.
         """
         try:
             # https://stackoverflow.com/a/5464440
@@ -112,7 +148,11 @@ class Terminal:
     @staticmethod
     def parser() -> argparse.ArgumentParser:
         """
-        Initialize command line parser with a wide text formatter
+        Initialize command line parser with a wide text formatter.
+
+        Returns
+        -------
+            argparse.ArgumentParser: The configured argument parser.
         """
         parser = argparse.ArgumentParser(
             formatter_class=Terminal._prettier(argparse.RawTextHelpFormatter)
@@ -156,28 +196,40 @@ class Terminal:
     @staticmethod
     def reader(path: str) -> pd.DataFrame:
         """
-        read CSV file into dataframe
+        Read a CSV file into a pandas DataFrame.
 
-        :param path (str): path to CSV file we want to filter
+        Args
+        ----
+            - path (str): The path to the CSV file.
+
+        Returns
+        -------
+            pd.DataFrame: The DataFrame created from the CSV file.
         """
         return pd.read_csv(path)
 
 
 class Feel(Terminal):
     """
-    primitive filter operations on a CSV file
+    A class for performing primitive filter operations on a CSV file.
     """
 
     def _convert_filter(
         dataframe: pd.DataFrame, column: str, operator: str, filter_val: str
-    ):
+    ) -> pd.Series:
         """
-        create a pandas filter from a command line filter
+        Create a pandas filter from a command line filter.
 
-        :param dataframe (pd.DataFrame): dataframe we are operating on (parsed from CSV)
-        :param filter_val (str): the column value we want to filter by
-        :param column (str): column we want to filter by
-        :param operator (str): filtering operator (~, <, >)
+        Args
+        ----
+            - dataframe (pd.DataFrame): The dataframe we are operating on (parsed from CSV).
+            - column (str): The column we want to filter by.
+            - operator (str): The filtering operator (~, <, >).
+            - filter_val (str): The column value we want to filter by.
+
+        Returns
+        -------
+            pd.Series: The pandas filter condition.
         """
         if isinstance(filter_val, list):
             if operator == "~":
@@ -197,14 +249,20 @@ class Feel(Terminal):
         filter_val: str,
         column: str,
         operator: Optional[str] = None,
-    ):
+    ) -> pd.Series:
         """
-        parse command line filter & convert it to a pandas filter condition
+        Parse command line filter and convert it to a pandas filter condition.
 
-        :param dataframe (pd.DataFrame): dataframe we are operating on (parsed from CSV)
-        :param filter_val (str): the column value we want to filter by
-        :param column (str): column we want to filter by
-        :param operator (str): filtering operator (~, <, >, |)
+        Args
+        ----
+            dataframe (pd.DataFrame): The dataframe we are operating on (parsed from CSV).
+            filter_val (str): The column value we want to filter by.
+            column (str): The column we want to filter by.
+            operator (str): The filtering operator (~, <, >, |).
+
+        Returns
+        -------
+            pd.Series: The pandas filter condition.
         """
         float_val = Operations.can_float(filter_val)
         int_val = Operations.can_int(filter_val)
@@ -231,9 +289,28 @@ class Feel(Terminal):
             return Feel._column_filter(dataframe, multi_val, column, operator)
         return Feel._convert_filter(dataframe, column, operator, filter_val)
 
-    def filtering(filters: List[Any], dataframe: pd.DataFrame, columns: str):
+    def filtering(
+        filters: List[Any], dataframe: pd.DataFrame, columns: str
+    ) -> Tuple[pd.DataFrame, List[str]]:
         """
-        verify a filter value is of the right format
+        Verify a filter value is of the right format
+
+        Args
+        ----
+            - filters (List[Any]): The list of filter values to apply.
+            - dataframe (pd.DataFrame): The dataframe to filter.
+            - columns (List[str]): The list of column names in the dataframe.
+
+        Returns
+        -------
+            Tuple[pd.DataFrame, List[str]]: A tuple containing the filtered dataframe and the list of
+                                            columns used for filtering.
+
+        Raises
+        ------
+            argparse.ArgumentTypeError: If a filter value is not in the correct format or if a column
+                                        is not valid.
+
 
         FILTER TYPES                              DESCRIPTION                             SUPPORTED TYPES
 
@@ -278,7 +355,6 @@ class Feel(Terminal):
                         Feel._column_filter(dataframe, stripped_val, column, operator)
                     )
                 elif ">" in filter_val:
-
                     operator, stripped_val = (
                         ">",
                         filter_val.split(">")[1],
@@ -305,9 +381,15 @@ class Feel(Terminal):
     @staticmethod
     def cli(cli_args: argparse.Namespace):
         """
-        process command line arguments
+        Process command line arguments and perform the filtering operation.
 
-        :param cli_args (argparse.Namespace): argparse command line arguments
+        Args
+        ----
+            - cli_args (argparse.Namespace): The command line arguments.
+
+        Raises
+        ------
+            SystemExit: If a valid path to input/output CSV is not provided.
         """
         if cli_args.input == "" or cli_args.output == "":
             print("valid path to input/output CSV is required")

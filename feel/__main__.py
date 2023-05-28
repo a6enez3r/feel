@@ -1,12 +1,12 @@
 """
-    feel: a tiny CLI to filter rows by column values in a CSV file
+    feel: a CLI to filter CSVs on the command line by column & row values
 """
 from feel import Feel
 
 
 def main():
     """
-    main function encapsulating command line logic
+    Main function encapsulating command line logic.
     """
     parser = Feel.parser()
     args = parser.parse_args()
