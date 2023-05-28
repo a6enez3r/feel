@@ -15,13 +15,3 @@ RUN apt update
 RUN pip install /root/feel
 
 ENTRYPOINT [ "feel" ]
-
-# FROM python:3.10-slim AS build-image
-# COPY --from=compile-image /root/.local /root/.local
-
-# # Authentication: specify GH_TOKEN in the environment
-
-# # Make sure scripts in .local are usable:
-# ENV PATH=/root/.local/bin:$PATH
-# # Run on startup
-# ENTRYPOINT [ "feel" ]
