@@ -33,7 +33,7 @@ and is invoked with the following syntax
 
 ```shell
   git clone https://github.com/a6enez3r/feel
-  cd automerge
+  cd feel
 ```
 
 - Create a virtual environment & install all dependencies
