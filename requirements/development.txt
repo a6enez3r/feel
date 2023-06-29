@@ -1,7 +1,7 @@
 bandit==1.7.5
 black==23.3.0
 flake8==6.0.0
-pandas==2.0.1
+pandas==2.0.3
 pdoc==13.1.1
 pylint==2.17.4
 pyre-check==0.9.18
